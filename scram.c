@@ -16,7 +16,9 @@ char *path;
 int main(int argc, char *argv[])
 {
 
-	printf("Scram Up!\n");
+    char cwd[1024];
+
+	// printf("Scram Up!\n");
 	
 	// Get path to scramble from arg:
 	if (argv[1] == NULL){
@@ -25,57 +27,63 @@ int main(int argc, char *argv[])
 	} else {
 		printf("Dir to Scram: %s...\n", argv[1]);
 		path = argv[1];
+	    getcwd(cwd, 1024);
 	}
 
+	// Dir/fd structs/defines:
 	DIR* FD;
     struct dirent* in_file;
-    // FILE    *common_file;
     FILE    *current_file;
-    char    buffer[BUFSIZ];
 
     // Seed rand once:
 	srand(time(NULL));
 
-    /* Openiing common file for writing */
-    // common_file = fopen(path_to_your_common_file, "w");
-    // if (common_file == NULL)
-    // {
-    //     fprintf(stderr, "Error : Failed to open common_file - %s\n", strerror(errno));
+    // Make Path:
+    char *full_path = malloc(1024);
+	if (strncmp(path, "/", 1) == 0) {
+		printf("Absolute Path Detected...\n");
+		strcat(full_path, path);
+		strcat(full_path, "/");
 
-    //     return 1;
-    // }
+	} else {
+		printf("Relative Path Detected...\n");
+	    strcat(full_path, cwd);
+	    strcat(full_path, "/");
+	    strcat(full_path, path);
+	    strcat(full_path, "/");
+	}
+
+
+
+    // printf("%s\n", full_path);
 
     /* Scanning the in directory */
-    if (NULL == (FD = opendir (path))) 
-    {
+    if ((FD = opendir(full_path)) == NULL) {
         fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
-        // fclose(common_file);
-
         return 1;
     }
-    while ((in_file = readdir(FD))) 
-    {
-        /* On linux/Unix we don't want current and parent directories
-         * On windows machine too, thanks Greg Hewgill
-         */
+
+  
+    // Iterate over files in dir:
+    while ((in_file = readdir(FD))) {
+        // Skip FS links:
         if (!strcmp (in_file->d_name, "."))
             continue;
         if (!strcmp (in_file->d_name, ".."))    
             continue;
-        /* Open directory entry file for common operation */
-        /* TODO : change permissions to meet your need! */
-        char path_temp[sizeof(path)];
-        strcpy(path_temp, path);
-        char *full_path = strcat(path_temp, in_file->d_name);
-        // printf("FP: %s\n", full_path);
-        current_file = fopen(full_path, "r+b");
+
+        char path_temp[1024];
+        strcpy(path_temp, full_path);
+        strcat(path_temp, in_file->d_name);;
+
+
+        printf("FP: %s\n", path_temp);
+        current_file = fopen(path_temp, "r+b");
         // printf("Trying to open %s...\n", full_path);
         if (current_file == NULL)
         {
         	// printf("Error w/ %s\n", full_path);
             fprintf(stderr, "Error : Failed to open current file - %s\n", strerror(errno));
-            // fclose(common_file);
-
             return 1;
         } else {
         	// Success!  Do stuff w/ file:
@@ -92,12 +100,12 @@ int main(int argc, char *argv[])
         	printf("rand spot: %i\n", spot);
 
         	// Choose random byte for replace:
-        	char c = (char)rand() % 255;
+        	char c = (char)(rand() % 255);
         	printf("char chosen: %c\n", c);
 
 
-        	// Change the byte
-        	fseek(current_file, sz, SEEK_SET);
+        	// Change the byte:
+        	fseek(current_file, spot, SEEK_SET);
 		    fputc(c, current_file);
         }
 
