@@ -41,21 +41,18 @@ int main(int argc, char *argv[])
     // Make Path:
     char *full_path = malloc(1024);
 	if (strncmp(path, "/", 1) == 0) {
-		printf("Absolute Path Detected...\n");
+		// printf("Absolute Path Detected...\n");
 		strcat(full_path, path);
 		strcat(full_path, "/");
 
 	} else {
-		printf("Relative Path Detected...\n");
+		// printf("Relative Path Detected...\n");
 	    strcat(full_path, cwd);
 	    strcat(full_path, "/");
 	    strcat(full_path, path);
 	    strcat(full_path, "/");
 	}
 
-
-
-    // printf("%s\n", full_path);
 
     /* Scanning the in directory */
     if ((FD = opendir(full_path)) == NULL) {
@@ -72,36 +69,35 @@ int main(int argc, char *argv[])
         if (!strcmp (in_file->d_name, ".."))    
             continue;
 
+        // Append file names to 
         char path_temp[1024];
         strcpy(path_temp, full_path);
         strcat(path_temp, in_file->d_name);;
 
 
-        printf("FP: %s\n", path_temp);
+        // printf("FP: %s\n", path_temp);
         current_file = fopen(path_temp, "r+b");
-        // printf("Trying to open %s...\n", full_path);
         if (current_file == NULL)
         {
-        	// printf("Error w/ %s\n", full_path);
             fprintf(stderr, "Error : Failed to open current file - %s\n", strerror(errno));
             return 1;
         } else {
-        	// Success!  Do stuff w/ file:
-        	printf("Opened %s", full_path);
+        	// Success!!
+        	// printf("Opened %s", full_path);
 
         	// Determine size:
         	fseek(current_file, 0L, SEEK_END);
 			int sz = ftell(current_file);
 			rewind(current_file);
-        	printf("w/ size %i\n", sz);
+        	// printf("w/ size %i\n", sz);
 
         	// Choose a random byte within bounds:
         	int spot = rand() % (sz + 1);
-        	printf("rand spot: %i\n", spot);
+        	// printf("rand spot: %i\n", spot);
 
         	// Choose random byte for replace:
         	char c = (char)(rand() % 255);
-        	printf("char chosen: %c\n", c);
+        	// printf("char chosen: %c\n", c);
 
 
         	// Change the byte:
@@ -109,22 +105,9 @@ int main(int argc, char *argv[])
 		    fputc(c, current_file);
         }
 
-        /* Doing some struf with current_file : */
-        /* For example use fgets */
-        // while (fgets(buffer, BUFSIZ, current_file) != NULL)
-        // {
-            /* Use fprintf or fwrite to write some stuff into common_file*/
-        // }
-
-        /* When you finish with the file, close it */
+       	// Close
         fclose(current_file);
-        // full_path = NULL;
     }
-
-    /* Don't forget to close common file before leaving */
-    // fclose(common_file);
-
-
 
 	return 0;
 }
