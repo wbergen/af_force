@@ -83,13 +83,27 @@ int main (int argc, char *argv[])
   // printf ("Reading From : %s (%s)\n", device, name);
  
 
+
   // Bookkeeping vars:
-  int q[6] = {0,0,0,0,0,0};
-  int q2[6] = {0,0,0,0,0,0};
-  int q_correct[6] = {31,18,46,19,18,20};
-  int q2_correct[6] = {31,50,24,24,20,35};
-  int ct = 0;
-  int ct2 = 0;
+  int q_arm[5] = {0,0,0,0,0};
+  int q_disarm[8] = {0,0,0,0,0,0,0,0};
+  int q_hide[6] = {0,0,0,0,0,0};
+  int q_unhide[8] = {0,0,0,0,0,0,0,0};
+
+  int q_arm_correct[5] = {30,33,30,19,50}; // afarm
+  int q_disarm_correct[8] = {30,33,32,23,31,30,19,50}; // afdisarm
+  int q_hide_correct[6] = {30,33,35,23,32,18}; // afhide
+  int q_unhide_correct[8] = {30,33,22,49,35,23,32,18}; // afunhide
+
+  int ct_arm = 0;
+  int ct_disarm = 0;
+  int ct_hide = 0;
+  int ct_unhide = 0;
+
+  // int *input_queue = malloc(sizeof(int)*10);
+  // int q_ct = 0;
+
+
   while (1){
       if ((rd = read (fd, ev, size * 64)) < size)
           perror_exit ("read()");      
@@ -98,63 +112,142 @@ int main (int argc, char *argv[])
 
 
       // Need to factor this LOL
+      // This is embarassing...
+      // What we need is a queue, which can be compared per step to the "xxx_correct" arrays, but...
+      // Simulate a q of 10:
+
+      // printf("len of q_disarm: %i\n", sizeof(q_disarm_correct)/sizeof(int*));
+
+
+
       // Keyboard down:
       if (ev[1].type == 1 && ev[1].value == 1) {
         // printf("-- value: %i\n", value);
-        
-        // SECRET:
-        if (value == 31 && ct == 0) {
+
+        // add each new char to the input_queue
+        // IGNORE THIS
+        // if (q_ct < 10) {
+        //   int j= 0;
+        //   for (int i = 0; i < q_ct; ++i)
+        //   {
+        //     /* code */
+        //   }
+        //   memset(((int*)input_queue)+q_ct,value,1);
+        // } else { }
+        //   // make backup
+        //   int *q_temp = malloc(sizeof(int)*11);
+        //   int j = 0;
+
+        //   memcpy(q_temp+1, input_queue, 10);
+        //   // memset()
+        // q_ct++;
+
+
+
+        // AFARM:
+        if (value == q_arm_correct[0] && ct_arm == 0) {
           // base case:
-          ct = 1;
-          q[0]=value;
-        } else if ((int)value == q_correct[ct] && ct < 6){
+          ct_arm = 1;
+          q_arm[0]=value;
+        } else if ((int)value == q_arm_correct[ct_arm] && ct_arm < 5){
           // fill array if we have 31 (s) in 1st pos.
-          q[ct]=value;
-          ct++;
+          q_arm[ct_arm]=value;
+          ct_arm++;
         } else {
-          ct = 0;
-          memset(&q[0], 0, sizeof(q));
+          ct_arm = 0;
+          memset(&q_arm[0], 0, sizeof(q_arm));
         }
 
         // Check for success:
-        if (ct == 6 && memcmp(&q, &q_correct, sizeof(q)) == 0) {
+        if (ct_arm == 5 && memcmp(&q_arm, &q_arm_correct, sizeof(q_arm)) == 0) {
           // React to success + rest vars:
           printf("%s\n", "Winner! :)");
           send_k_message("arm");
-          ct = 0;
-          memset(&q[0], 0, sizeof(q));
+          ct_arm = 0;
+          memset(&q_arm[0], 0, sizeof(q_arm));
         }
 
 
-        // SMOOTH:
-        if (value == 31 && ct2 == 0) {
+        // AFDISARM:
+        if (value == q_disarm_correct[0] && ct_disarm == 0) {
           // base case:
-          ct2 = 1;
-          q2[0]=value;
-        } else if ((int)value == q2_correct[ct2] && ct2 < 6){
+          ct_disarm = 1;
+          q_disarm[0]=value;
+        } else if ((int)value == q_disarm_correct[ct_disarm] && ct_disarm < 8){
           // fill array if we have 31 (s) in 1st pos.
-          q2[ct2]=value;
-          ct2++;
+          q_disarm[ct_disarm]=value;
+          ct_disarm++;
         } else {
-          ct2 = 0;
-          memset(&q2[0], 0, sizeof(q2));
+          ct_disarm = 0;
+          memset(&q_disarm[0], 0, sizeof(q_disarm));
         }
 
         // Check for success:
-        if (ct2 == 6 && memcmp(&q2, &q2_correct, sizeof(q2)) == 0) {
+        if (ct_disarm == 8 && memcmp(&q_disarm, &q_disarm_correct, sizeof(q_disarm)) == 0) {
           // React to success + rest vars:
           printf("%s\n", "Winner! :)");
           send_k_message("disarm");
-          ct2 = 0;
-          memset(&q2[0], 0, sizeof(q2));
+          ct_disarm = 0;
+          memset(&q_disarm[0], 0, sizeof(q_disarm));
         }
 
-        // Pretty q printing for debuggin:
+
+        // AFHIDE:
+        if (value == q_hide_correct[0] && ct_hide == 0) {
+          // base case:
+          ct_hide = 1;
+          q_hide[0]=value;
+        } else if ((int)value == q_hide_correct[ct_hide] && ct_hide < 6){
+          // fill array if we have 31 (s) in 1st pos
+          q_hide[ct_hide]=value;
+          ct_hide++;
+        } else {
+          ct_hide = 0;
+          memset(&q_hide[0], 0, sizeof(q_hide));
+        }
+
+        // Check for success:
+        if (ct_hide == 6 && memcmp(&q_hide, &q_hide_correct, sizeof(q_hide)) == 0) {
+          // React to success + rest vars:
+          printf("%s\n", "Winner! :)");
+          send_k_message("hide");
+          ct_hide = 0;
+          memset(&q_hide[0], 0, sizeof(q_hide));
+        }
+
+
+        // AFUNHIDE:
+        if (value == q_unhide_correct[0] && ct_unhide == 0) {
+          // base case:
+          ct_unhide = 1;
+          q_unhide[0]=value;
+        } else if ((int)value == q_unhide_correct[ct_unhide] && ct_unhide < 8){
+          // fill array if we have 31 (s) in 1st pos
+          q_unhide[ct_unhide]=value;
+          ct_unhide++;
+        } else {
+          ct_unhide = 0;
+          memset(&q_unhide[0], 0, sizeof(q_unhide));
+        }
+
+        // Check for success:
+        if (ct_unhide == 8 && memcmp(&q_unhide, &q_unhide_correct, sizeof(q_unhide)) == 0) {
+          // React to success + rest vars:
+          printf("%s\n", "Winner! :)");
+          send_k_message("unhide");
+          ct_unhide = 0;
+          memset(&q_unhide[0], 0, sizeof(q_unhide));
+        }
+
+
+
+
+      //   // Pretty q printing for debuggin:
       //   int i = 0;
-      //   printf("q2: ");
-      //   for (i = 0; i < 6; ++i)
+      //   printf("q_unhide");
+      //   for (i = 0; i < 8; ++i)
       //   {
-      //     printf("%i ", q2[i]);
+      //     printf("%i ", q_unhide[i]);
       //   }
       //   printf("\n");
 
@@ -164,3 +257,46 @@ int main (int argc, char *argv[])
  
   return 0;
 }
+
+
+/**
+"afhide"
+-- value: 30
+a-- value: 33
+f-- value: 35
+h-- value: 23
+i-- value: 32
+d-- value: 18
+
+"afunhide"
+-- value: 30
+a-- value: 33
+f-- value: 22
+u-- value: 49
+n-- value: 35
+h-- value: 23
+i-- value: 32
+d-- value: 18
+e
+
+*//*
+"afarm"
+-- value: 30
+a-- value: 33
+f-- value: 30
+a-- value: 19
+r-- value: 50
+m
+
+
+"afdisarm"
+-- value: 30
+a-- value: 33
+f-- value: 32
+d-- value: 23
+i-- value: 31
+s-- value: 30
+a-- value: 19
+r-- value: 50
+m
+*/

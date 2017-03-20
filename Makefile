@@ -2,6 +2,8 @@ obj-m += af_force3.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	gcc scram.c -o scrambler
+	gcc af_interface1.c -o af_interface
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean

