@@ -11,12 +11,11 @@
 #include <time.h>
 
 
-char *path;
-
 int main(int argc, char *argv[])
 {
 
     char cwd[1024];
+    char *path;
 
 	// printf("Scram Up!\n");
 	

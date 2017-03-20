@@ -1,6 +1,12 @@
 // Following source used as template
 // http://www.thelinuxdaily.com/2010/05/grab-raw-keyboard-input-from-event-device-node-devinputevent/
 
+/*  Will Bergen - AF_Interface
+*   Userland interface for our lkm.  Reads raw keyboard input, looking for trigger sequences
+*   Communicates with lkm via ioctl device.  Communicates arm/disarm instructions to lkm
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
