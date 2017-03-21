@@ -1,0 +1,35 @@
+(2004) The Defiler's Toolkit:
+http://answers.google.com/answers/threadview?id=345604
+
+(2005) SMART Anti-Forensics:
+http://www.forensicfocus.com/smart-anti-forensics
+
+[PDF](2006) Stach & Liu Defeating Forensic Analysis
+https://repo.zenk-security.com/Forensic/CEIC2006-Defeating_Forensic_Analysis.pdf
+
+[PDF](2007) Anti-Forensics: Techniques, Detection and Countermeasures
+http://www.dtic.mil/dtic/tr/fulltext/u2/a576161.pdf
+
+[Haven't found actual paper]
+Li u and Brown (2006), “Bleeding-Edge Anti-Forensics,” Infosec World Conference & Expo, MIS Training Institute.
+
+(2006) Anti-Forensics Presentation
+https://www.youtube.com/watch?v=q9VUbiFdx7w
+
+(2000) Rootkits: How Intruders Hide
+http://www.globalsecurity.org/intell/library/news/2000/02/000223-hack1.htm
+
+[PDF] (2005) Hiding Data in Journaling File Systems
+http://www.dfrws.org/sites/default/files/session-files/paper-data_hiding_in_journaling_file_systems.pdf
+
+[PDF] (2006) Arriving at an Anti-Forensics Consensus
+https://www.dfrws.org/sites/default/files/session-files/paper-arriving_at_an_anti-forensics_consensus_-_examining_how_to_define_and_control_the_anti-forensics_problem.pdf
+
+[PDF] (2013) Booby Trapping Software
+http://www.nspw.org/papers/2013/nspw2013-crane.pdf
+
+[PDF] (2012) Triage Template Pipelines in Digital Forensic Investigations
+https://www.researchgate.net/publication/259164846_Triage_template_pipelines_in_digital_forensic_investigations
+
+[PDF] (2011) Forenscope: A Framework for Live Forensics
+https://www.ideals.illinois.edu/bitstream/handle/2142/24365/Chan_Ellick.pdf
