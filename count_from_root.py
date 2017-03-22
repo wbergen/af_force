@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python python
 
 
 from subprocess import call
@@ -16,7 +16,7 @@ def handler_function(arg1, arg2):
 
 
 # root_dirs = ['/bin', '/usr', '/var']
-root_dirs=glob('/*')
+root_dirs=glob('/home/tmp/*')
 # root_dirs=[]
 # print root_dirs
 # print len(root_dirs)
