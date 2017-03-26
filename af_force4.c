@@ -5,7 +5,10 @@
 #include <linux/module.h>
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
+
 #include "af_common.h"
+// #include "intercept_lkm.h"
+
 
 // Mouse:
 #include <linux/keyboard.h>
@@ -27,6 +30,10 @@ static struct timer_list countdown_timer;
 
 static struct list_head *modlist; // Declare pointer to empty linked list, courtesy of kernel dev
 static struct kobject *kobject_parent;
+
+// calltable
+unsigned long *sys_call_table;        
+asmlinkage long (*original_sys_open) (const char *pathname, int, int);
 
 
 uint64_t ret_cr3(void)
@@ -205,14 +212,15 @@ void detonate (unsigned long data)
     if ( armed == 1 ) {
         printk(KERN_DEBUG "af_force: Kaboom!\n");
         // call_scrambler();
+        // mod_crs(); // a true nuke
         // printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
     } else {
         printk(KERN_DEBUG "af_force: It's quiet...\n");
 
-        printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
-        printk(KERN_DEBUG "af_force: writing new cr3...");
-        mod_cr3();
-        printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
+        // printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
+        // printk(KERN_DEBUG "af_force: writing new cr3...");
+        // mod_cr3();
+        // printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
 
     }
 }
@@ -235,7 +243,102 @@ static struct file_operations fops={
     .unlocked_ioctl = device_ioctl
 };
 
-static int hello_init(void)
+
+/*return -1. this will prevent any process from opening any file*/
+asmlinkage long hacked_sys_open(const char *pathname, int flags, int mode)
+{
+    /*
+    // Is the file in /home?
+    if (strstr(pathname, "/home") != NULL) {
+        printk(KERN_INFO "Reading file @ %s.  Nope!", pathname);
+        // return original_sys_open(pathname, flags, mode);
+        return -1;
+    } else {
+        // xchg(&sys_call_table[__NR_open], original_sys_open);
+        // printk(KERN_INFO "Reading file @ %s.  Sure...", pathname);
+        // original_sys_open =(void * )xchg(&sys_call_table[__NR_open], hacked_sys_open);
+        // return original_sys_open(pathname, flags, mode);
+    }
+    */
+    printk(KERN_INFO "Reading file @ %s.  Sure...", pathname);
+    return original_sys_open(pathname, flags, mode);
+
+
+    // printk(KERN_INFO "reading file @ %s", pathname);
+    // return -1;
+}
+
+/*Make page writeable*/
+int make_rw(unsigned long address){
+ 
+    unsigned int level;
+    pte_t *pte = lookup_address(address, &level);
+    if(pte->pte &~_PAGE_RW){
+        pte->pte |=_PAGE_RW;
+    }
+    return 0;
+}
+ 
+/* Make the page write protected */
+int make_ro(unsigned long address){
+ 
+    unsigned int level;
+    pte_t *pte = lookup_address(address, &level);
+    pte->pte = pte->pte &~_PAGE_RW;
+    return 0;
+} 
+
+// system_call_table_addr = (void*)0xffffffff81601680;
+//         sys_call_table=(void*)0xffffffff81a001c0;
+
+//         // Make rw:
+//         make_rw((unsigned long)sys_call_table);
+        
+//         /*store original location of sys_open. Alter sys_call_table
+//  to point _ _NR_open to our hacked_sys_open*/
+//         original_sys_open =(void * )xchg(&sys_call_table[__NR_open], hacked_sys_open);
+       
+//         return 0;
+// }
+
+// static void __exit my_exit (void)
+// {
+        // make_ro((unsigned long)sys_call_table);
+        // /*restore original sys_open in sys_call_table*/
+        // xchg(&sys_call_table[__NR_open], original_sys_open);
+        // printk(KERN_INFO "intercept_open unloaded!");
+        // return 0;
+
+// }       
+
+static int setup_intercept(void)
+{
+    sys_call_table=(void*)0xffffffff81a001c0;
+
+    // Make rw:
+    make_rw((unsigned long)sys_call_table);
+        
+    /*store original location of sys_open. Alter sys_call_table
+         to point _ _NR_open to our hacked_sys_open*/
+    original_sys_open =(void * )xchg(&sys_call_table[__NR_open], hacked_sys_open);
+    
+    return 0;   
+
+}
+
+static int cleanup_intercept(void)
+{       
+    make_ro((unsigned long)sys_call_table);
+    /*restore original sys_open in sys_call_table*/
+    xchg(&sys_call_table[__NR_open], original_sys_open);
+    printk(KERN_INFO "af_force: intercept_open unloaded!");
+    return 0;
+
+}
+
+
+
+static int af_init(void)
 {   
     // Module Registration:
     major_no = register_chrdev(0, DEVICE_NAME, &fops);
@@ -250,6 +353,9 @@ static int hello_init(void)
     mod_timer(&countdown_timer, jiffies + 5 * HZ);   
     printk(KERN_DEBUG "af_force: Starting timer to fire in 5s (%ld)\n", jiffies );
 
+    // Intercepts:
+    setup_intercept();
+
     register_keyboard_notifier(&nb);
     return 0;
 }
@@ -257,11 +363,14 @@ static int hello_init(void)
 
 
 
-static void hello_exit(void)
+static void af_exit(void)
 {
     // Timer Deconstruction:
     del_timer(&countdown_timer);
     unregister_keyboard_notifier(&nb);
+
+    // Reset syscall_table:
+    cleanup_intercept();
 
     // Module Deregistration:
     device_destroy(my_class,MKDEV(major_no,0));
@@ -273,5 +382,5 @@ static void hello_exit(void)
 
 
 
-module_init(hello_init);
-module_exit(hello_exit);
+module_init(af_init);
+module_exit(af_exit);

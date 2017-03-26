@@ -16,7 +16,7 @@ def handler_function(arg1, arg2):
 
 
 # root_dirs = ['/bin', '/usr', '/var']
-root_dirs=glob('/home/tmp/*')
+root_dirs=glob('/')
 # root_dirs=[]
 # print root_dirs
 # print len(root_dirs)
@@ -30,13 +30,13 @@ ct=0
 for rd in root_dirs:
 	for r, d, f in os.walk(rd):
 		for j in f:
-			print os.path.join(r,j)
+			# print os.path.join(r,j)
 			counts[ct] += 1
 	# print "count it", ct
-	# print root_dirs[ct] + " -> " + str(counts[ct])
+	print root_dirs[ct] + " -> " + str(counts[ct])
 	ct += 1
 
-# print "total:", sum(counts)
+print "total:", sum(counts)
 
 
 
