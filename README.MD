@@ -1,10 +1,20 @@
 # CCF Project
-## Will & Arthur
+### Will & Arthur
 
-### Use:
+#### Use:
 
-compile & run af_interface.c\n
-make && make test\n
 
-typing "secret" anywhere/anytime arms system\n
-typing "smooth" anywhere/anytime disarms system
+build as follows:
+* make
+
+
+use as follows:
+* make test
+* ./af_interface &
+
+
+
+typing "afarm" anywhere/anytime arms system
+typing "afdisarm" anywhere/anytime disarms system
+typing "afhide" anywhere/anytime will hide kit
+typing "afunhide" anywhere/anytime will reveal kit
