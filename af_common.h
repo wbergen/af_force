@@ -6,6 +6,7 @@
 #define WRITE 0
 static int major_no;
 #define MAGIC_NO '4'
+#define AF 1
 /* 
  * Set the message of the device driver 
  */
