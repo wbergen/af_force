@@ -1,6 +1,7 @@
-CCF Project - Will & Arthur
+# CCF Project
+## Will & Arthur
 
-To Use:
+### Use:
 
 compile & run af_interface.c\n
 make && make test\n

