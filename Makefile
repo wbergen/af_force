@@ -1,4 +1,4 @@
-obj-m += af_force4.o
+obj-m += af_force.o
 
 # CFLAGS=-Wnounused-function
 
@@ -11,4 +11,4 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 
 test:
-	sudo insmod ./af_force4.ko
+	sudo insmod ./af_force.ko
